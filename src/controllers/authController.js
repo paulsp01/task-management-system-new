@@ -5,11 +5,19 @@ const User = require('../entities/User');
 
 const register = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password,role } = req.body;
+
+     const existingUser = await AppDataSource.manager.findOne(User, {
+       where: { username },
+     });
+     if (existingUser) {
+       return res.status(400).json({ error: "User already exists" });
+     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User();
     user.username = username;
     user.password = hashedPassword;
+    user.role = role || "user";
     await AppDataSource.manager.save(user);
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {

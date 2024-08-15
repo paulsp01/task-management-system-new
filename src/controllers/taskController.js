@@ -20,7 +20,14 @@ const createTask = async (req, res) => {
 
 const getTasks = async (req, res) => {
   try {
-    const { status, priority, due_date, search } = req.query;
+    const {
+      status,
+      priority,
+      due_date,
+      search,
+      page = 1,
+      limit = 10,
+    } = req.query;
     const whereClause = { user: req.user };
 
     // Apply filtering
@@ -28,21 +35,43 @@ const getTasks = async (req, res) => {
     if (priority) whereClause.priority = priority;
     if (due_date) whereClause.due_date = due_date;
 
-    // Apply searching
-    if (search) {
-      whereClause.title = search;
-      whereClause.description = search;
-    }
+    // Define pagination parameters
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    const tasks = await AppDataSource.manager.find(Task, {
-      where: whereClause,
+    // Apply searching on title or description using the ILIKE operator (PostgreSQL or similar SQL systems)
+    const queryBuilder = AppDataSource.manager
+      .createQueryBuilder(Task, "task")
+      .where(whereClause)
+      .andWhere(
+        new Brackets((qb) => {
+          if (search) {
+            qb.where("task.title ILIKE :search", {
+              search: `%${search}%`,
+            }).orWhere("task.description ILIKE :search", {
+              search: `%${search}%`,
+            });
+          }
+        })
+      )
+      .skip(skip)
+      .take(limitNumber);
+
+    const [tasks, total] = await queryBuilder.getManyAndCount();
+
+    res.status(200).json({
+      total,
+      page: pageNumber,
+      limit: limitNumber,
+      tasks,
     });
-
-    res.status(200).json(tasks);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Fetching tasks failed" });
   }
 };
+
 
 const updateTask = async (req, res) => {
   try {
