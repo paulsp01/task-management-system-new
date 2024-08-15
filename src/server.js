@@ -6,7 +6,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const { createConnection } = require("typeorm");
 require("reflect-metadata");
-
+const { swaggerUi, swaggerSpec } = require("./config/swagger");
 const userRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 
@@ -20,7 +20,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
-
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Connect to the database
 createConnection()
   .then(() => {

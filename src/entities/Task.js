@@ -3,6 +3,8 @@ const {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
 } = require("typeorm");
 const User = require("./User");
 
@@ -11,25 +13,42 @@ class Task {
   @PrimaryGeneratedColumn()
   id;
 
-  @Column()
+  @Column({
+    type: "varchar",
+    length: 255, // Specify the length if needed
+  })
   title;
 
-  @Column()
+  @Column({
+    type: "text", // Use 'text' for longer descriptions
+  })
   description;
 
-  @Column()
+  @Column({
+    type: "varchar",
+    length: 50, // Specify the length if needed
+  })
   status;
 
-  @Column()
+  @Column({
+    type: "varchar",
+    length: 50, // Specify the length if needed
+  })
   priority;
 
-  @Column()
+  @Column({
+    type: "date", // Use 'date' for due_date
+  })
   due_date;
 
-  @Column({ default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn({
+    type: "timestamp",
+  })
   created_at;
 
-  @Column({ default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn({
+    type: "timestamp",
+  })
   updated_at;
 
   @ManyToOne(() => User, (user) => user.tasks)
